@@ -3,7 +3,7 @@ import re
 from aiogram import Router, F, types
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-
+from config import database
 
 survey_router = Router()
 
@@ -87,10 +87,17 @@ async def process_purities(message: types.Message, state: FSMContext):
 
 
 @survey_router.message(BookSurvey.comments)
-async def process_data(message: types.Message, state: FSMContext):
+async def process_comments(message: types.Message, state: FSMContext):
     comments = message.text.strip()
     await state.update_data(comments=comments)
 
+    data = await state.get_data()
+
+    await database.execute("""
+    INSERT INTO survey_results (name, numbers, data, qualities, purities, comments) 
+    VALUES (?, ?, ?, ?, ?, ?)""",
+                           (data['name'], data['numbers'], data['data'], [data['qualities']], data['purities'], data['comments'])
+    )
     await message.answer("Спасибо за прохождения опроса")
     await state.finish()
 
