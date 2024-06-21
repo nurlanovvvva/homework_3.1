@@ -43,7 +43,4 @@ async def reply_photo_handler(callback: types.CallbackQuery):
     await callback.answer()
 
 
-@start_router.callback_query(F.data == "survey")
-async def survey_handler(callback: types.CallbackQuery, state: FSMContext):
-    await start_survey(callback.message, state)
-    await callback.answer()
+
