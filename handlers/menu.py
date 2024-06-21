@@ -1,23 +1,22 @@
 import os
-
-from aiogram import Router, F, types
-from aiogram.filters.command import Command
-import images
-
+from aiogram import types, Router
+from aiogram.filters import Command
+from database.database import Database
 
 menu_router = Router()
-
+database = Database('db1.sqlite3')
 
 @menu_router.message(Command('menu'))
 async def menu(message: types.Message):
     kb = types.ReplyKeyboardMarkup(
         keyboard=[
             [
-                types.KeyboardButton(text="Напитки")
+                types.KeyboardButton(text="Завтраки"),
+                types.KeyboardButton(text="Супы")
             ],
             [
-                types.KeyboardButton(text="Десерты"),
-                types.KeyboardButton(text="Первые блюда")
+                types.KeyboardButton(text="Круассаны"),
+                types.KeyboardButton(text="Пицца")
             ]
         ],
         resize_keyboard=True,
@@ -25,28 +24,19 @@ async def menu(message: types.Message):
     await message.answer("Меню", reply_markup=kb)
 
 
-@menu_router.message(F.text == "Напитки")
-async def menu(message: types.Message):
-    file = types.FSInputFile("images/napitki.jpg")
-    await message.answer_photo(photo=file)
-    print(message.text)
-    kb = types.ReplyKeyboardRemove()
-    await message.answer(f"Наши напитки")
+@menu_router.message(text=['Завтраки', 'Супы', 'Круассаны', 'Пицца'])
+async def handle_menu_choice(message: types.Message):
+    category = message.text
+    dishes = await database.fetch("""
+        SELECT * FROM dishes 
+        INNER JOIN categories ON dishes.category_id = categories.id
+        WHERE categories.name = ?
+    """, (category,), fetch_type="all")
 
-
-@menu_router.message(F.text == "Десерты")
-async def menu(message: types.Message):
-    file = types.FSInputFile("images/desert.jpg")
-    await message.answer_photo(photo=file)
-    print(message.text)
-    kb = types.ReplyKeyboardRemove()
-    await message.answer(f"Наши десерты")
-
-
-@menu_router.message(F.text == "Первые блюда")
-async def menu(message: types.Message):
-    file = types.FSInputFile("images/pervye.jpg")
-    await message.answer_photo(photo=file)
-    print(message.text)
-    kb = types.ReplyKeyboardRemove()
-    await message.answer(f"Наши первые блюда")
+    if not dishes:
+        await message.answer(f"К сожалению, в категории {category} пока нет блюд.")
+    else:
+        response = f"Блюда в категории {category}:\n"
+        for dish in dishes:
+            response += f"{dish['name']} - {dish['price']} сом\n"
+        await message.answer(response)

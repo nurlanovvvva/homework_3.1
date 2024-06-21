@@ -23,16 +23,13 @@ class Database:
             await conn.execute(query, params)
             await conn.commit()
 
-    async def main():
-        db = Database('db1.sqlite')
-        await db.create_tables()
-
-        # Пример запроса INSERT для таблицы "review"
-        query = "INSERT INTO db.sqlite (name, phone, visit_data, food_quality, cleanliness, comments) VALUES (?, ?, ?, ?, ?, ?)"
-        params = ('Айдай', '0709331013', '12-09-2022', '5', '4', 'очень уютно')
-        await db.execute(query, params)
-
-    if __name__ == "__main__":
-        import asyncio
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+    async def fetch(self, query: str, params: tuple = (), fetch_type: str = "all"):
+        async with aiosqlite.connect(self.path) as conn:
+            conn.row_factory = aiosqlite.Row
+            data = await conn.execute(query, params)
+            if fetch_type == "one":
+                result = await data.fetchone()
+                return dict(result)
+            else:
+                result = await data.fetchall()
+                return [dict(row) for row in result]

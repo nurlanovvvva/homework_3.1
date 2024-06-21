@@ -1,11 +1,13 @@
 import asyncio
 from config import dp, bot, database
 
+from handlers.menu import menu_router
 from handlers.start import start_router
 from handlers.myinfo import myinfo_router
 from handlers.picture import random_router
 from handlers.survey import survey_router
-from handlers.menu import menu_router
+
+
 
 async def on_startup(bot):
     await database.create_tables()
