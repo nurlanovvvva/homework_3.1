@@ -28,8 +28,8 @@ class Database:
             conn.row_factory = aiosqlite.Row
             data = await conn.execute(query, params)
             if fetch_type == "one":
-                result = await data.fetchone()
-                return dict(result)
+                result = await data.fetchall()
+                return [dict(row) for row in result]
             else:
                 result = await data.fetchall()
                 return [dict(row) for row in result]

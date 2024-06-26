@@ -1,10 +1,9 @@
 import os
-from aiogram import types, Router
+from aiogram import types, Router, F
 from aiogram.filters import Command
-from database.database import Database
+from config import database
 
 menu_router = Router()
-database = Database('db1.sqlite3')
 
 @menu_router.message(Command('menu'))
 async def menu(message: types.Message):
@@ -24,14 +23,17 @@ async def menu(message: types.Message):
     await message.answer("Меню", reply_markup=kb)
 
 
-@menu_router.message(text=['Завтраки', 'Супы', 'Круассаны', 'Пицца'])
+categories = ("Завтраки", "Супы", "Круассаны", "Пицца")
+
+@menu_router.message(F.text.lower().in_(categories))
 async def handle_menu_choice(message: types.Message):
+    kb = types.ReplyKeyboardMarkup()
     category = message.text
     dishes = await database.fetch("""
         SELECT * FROM dishes 
         INNER JOIN categories ON dishes.category_id = categories.id
         WHERE categories.name = ?
-    """, (category,), fetch_type="all")
+    """, (category,))
 
     if not dishes:
         await message.answer(f"К сожалению, в категории {category} пока нет блюд.")
@@ -40,3 +42,4 @@ async def handle_menu_choice(message: types.Message):
         for dish in dishes:
             response += f"{dish['name']} - {dish['price']} сом\n"
         await message.answer(response)
+
