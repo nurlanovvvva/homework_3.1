@@ -25,10 +25,10 @@ async def menu(message: types.Message):
 
 categories = ("Завтраки", "Супы", "Круассаны", "Пицца")
 
-@menu_router.message(F.text.lower().in_(categories))
+@menu_router.message(F.text.capitalize().in_(categories))
 async def handle_menu_choice(message: types.Message):
     kb = types.ReplyKeyboardMarkup()
-    category = message.text
+    category = message.text.capitalize()
     dishes = await database.fetch("""
         SELECT * FROM dishes 
         INNER JOIN categories ON dishes.category_id = categories.id
